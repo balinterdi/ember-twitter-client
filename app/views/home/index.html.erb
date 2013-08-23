@@ -1,0 +1,100 @@
+<script type="text/x-handlebars">
+  <div class="row">
+    <div class="large-12 columns">
+      <div class="panel">
+        {{#linkTo "index"}}
+          <h1>Twitter Feed</h1>
+        {{/linkTo}}
+      </div>
+    </div>
+  </div>
+
+  {{outlet}}
+
+  <footer class="row">
+    <div class="large-12 columns">
+      <hr />
+      <div class="row">
+        <div class="large-5 columns">
+          <p>&copy; Copyright no one at all. Go to town.</p>
+        </div>
+        <div class="large-7 columns">
+        </div>
+      </div>
+    </div>
+  </footer>
+</script>
+
+<script type="text/x-handlebars" data-template-name="user">
+  <div class="row">
+
+    {{outlet}}
+
+    <div class="small-12 medium-4 large-4 columns medium-pull-8 large-pull-8">
+      <div class="panel">
+        <h6>Compose a tweet</h6>
+        <textarea placeholder="Shout it out!"></textarea>
+      </div>
+
+      <div class="panel mini-profile">
+        {{#view App.TimelineLinkView nameBinding=screen_name}}
+          <img {{bindAttr src=profile_image_url}} />
+          <div class="name">
+            {{name}}
+          </div>
+        {{/view}}
+        </a>
+        <div class="row">
+          <div class="large-4">
+            <span class="profile-num">
+              <strong>{{statuses_count}}</strong>
+            <span>
+            <span class="profile-quantity">Tweets</span>
+          </div>
+          <div class="large-4">
+            <span class="profile-num">
+              <strong>{{friends_count}}</strong>
+            </span>
+            <span class="profile-quantity">Following</span>
+          </div>
+          <div class="large-3 last">
+            <span class="profile-num">
+              <strong>{{followers_count}}</strong>
+            </span>
+            <span class="profile-quantity">Followers</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</script>
+
+<script type="text/x-handlebars" data-template-name="user/home">
+  {{partial "tweets"}}
+</script>
+
+<script type="text/x-handlebars" data-template-name="user/timeline">
+  {{partial "tweets"}}
+</script>
+
+<script type="text/x-handlebars" data-template-name="_tweets">
+    <div class="small-12 medium-8 large-8 columns medium-push-4 large-push-4">
+      {{#each controller itemController="tweet"}}
+        <div class="row">
+          <div class="small-3 large-2 columns ">
+            <img {{bindAttr src="biggerImageUrl"}} />
+          </div>
+          <div class="small-9 large-10 columns">
+            <p>
+              {{#view App.TimelineLinkView nameBinding=user.screen_name}}
+                <strong>{{user.screen_name}}</strong>
+              {{/view}}
+              {{html this}}
+            </p>
+          </div>
+        </div>
+        <hr />
+      {{/each}}
+    </div>
+</script>
+
