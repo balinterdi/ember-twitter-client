@@ -11,6 +11,7 @@ class ApplicationController < ActionController::Base
     end
   end
 
+  #TODO: Delete me
   def current_user
     if session[:current_user_id]
       user = api.get "/users/#{session[:current_user_id]}"
@@ -28,6 +29,10 @@ class ApplicationController < ActionController::Base
 
       conn.adapter Faraday.default_adapter
     end
+  end
+
+  def api_get(url, params={})
+    api.get url, params.merge(user_id: session[:current_user_id])
   end
 
   def api_base
