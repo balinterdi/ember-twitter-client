@@ -37,6 +37,6 @@ class ApplicationController < ActionController::Base
 
   def api_base
     # "http://ember-twitter-api.dev/"
-    "http://localhost:3003"
+    "http://localhost:3000"
   end
 end

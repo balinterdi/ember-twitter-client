@@ -2,9 +2,9 @@
   <div class="row">
     <div class="large-12 columns">
       <div class="panel">
-        {{#linkTo "index"}}
+        {{#link-to "index"}}
           <h1>Twitter Feed</h1>
-        {{/linkTo}}
+        {{/link-to}}
       </div>
     </div>
   </div>
@@ -38,7 +38,7 @@
 
       <div class="panel mini-profile">
         {{#view App.TimelineLinkView nameBinding=screen_name}}
-          <img {{bindAttr src=profile_image_url}} />
+          <img {{bind-attr src=profile_image_url}} />
           <div class="name">
             {{name}}
           </div>
@@ -82,7 +82,7 @@
       {{#each controller itemController="tweet"}}
         <div class="row">
           <div class="small-3 large-2 columns ">
-            <img {{bindAttr src="biggerProfileImage"}} />
+            <img {{bind-attr src="biggerProfileImage"}} />
           </div>
           <div class="small-9 large-10 columns">
             <p>

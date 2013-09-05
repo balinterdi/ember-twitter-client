@@ -8,7 +8,7 @@ App.Router.map(function() {
 });
 
 App.IndexRoute = Ember.Route.extend({
-  redirect: function() {
+  beforeModel: function() {
     return this.transitionTo('user.home');
   }
 });
