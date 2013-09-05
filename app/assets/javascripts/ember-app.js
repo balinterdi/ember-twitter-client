@@ -21,14 +21,35 @@ App.UserRoute = Ember.Route.extend({
 
 App.UserHomeRoute = Ember.Route.extend({
   model: function() {
-    return Ember.$.getJSON('/timelines/home.json');
+    return this.controllerFor('user').get('model');
+  },
+  setupController: function(controller, model) {
+    var tweetsPromise = Ember.$.getJSON('/timelines/home.json');
+    tweetsPromise.then(function(tweets) {
+      controller.set('tweets', tweets);
+    });
   }
 });
 
 App.UserTimelineRoute = Ember.Route.extend({
   model: function(params) {
-    return Ember.$.getJSON('/timelines/' + params.screen_name + '.json');
+    return Ember.$.getJSON('/user_info/' + params.screen_name + '.json');
+  },
+  setupController: function(controller, model) {
+    var tweetsPromise = Ember.$.getJSON('/timelines/' + model.screen_name + '.json');
+    tweetsPromise.then(function(tweets) {
+      controller.set('tweets', tweets);
+    });
   }
+});
+
+App.UserController = Ember.ObjectController.extend();
+//TODO: We can probably remove that once user timelines work
+App.UserHomeController = Ember.ObjectController.extend({
+  tweets: []
+});
+App.UserTimelineController = Ember.ObjectController.extend({
+  tweets: []
 });
 
 App.TweetController = Ember.ObjectController.extend({

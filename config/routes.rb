@@ -3,7 +3,8 @@ EmberTwitterClient::Application.routes.draw do
 
   resource :session
   resource :user
-  resources :timelines do
+  get '/user_info/:id' => 'user_info#show'
+  resources :timelines, only: :show do
     get :home, on: :collection
   end
 

@@ -70,6 +70,9 @@
 </script>
 
 <script type="text/x-handlebars" data-template-name="user/home">
+  <div>
+    {{model}}
+  </div>
   {{partial "tweets"}}
 </script>
 
@@ -79,7 +82,7 @@
 
 <script type="text/x-handlebars" data-template-name="_tweets">
     <div class="small-12 medium-8 large-8 columns medium-push-4 large-push-4">
-      {{#each controller itemController="tweet"}}
+      {{#each tweets itemController="tweet"}}
         <div class="row">
           <div class="small-3 large-2 columns ">
             <img {{bind-attr src="biggerProfileImage"}} />
