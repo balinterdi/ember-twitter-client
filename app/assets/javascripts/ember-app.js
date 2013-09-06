@@ -1,6 +1,24 @@
 window.App = Ember.Application.create();
 
+var apiRoot = 'http://localhost:3000';
+var newSessionURL = apiRoot + '/session/new';
+var ajax = function(type, path, token) {
+  return Ember.$.ajax(path, {
+    type: type,
+    headers: { 'X-OAuth-Token': token }
+  })
+}
+
+var apiGet = function(path) {
+  return Ember.$.getJSON(apiRoot + path);
+}
+
+App.Token = Ember.Object.extend({
+  token: null
+});
+
 App.Router.map(function() {
+  this.route('token', { path: '/token/:token' });
   this.resource('user', function() {
     this.route('home');
     this.route('timeline', { path: '/timelines/:screen_name' });
@@ -8,14 +26,28 @@ App.Router.map(function() {
 });
 
 App.IndexRoute = Ember.Route.extend({
-  beforeModel: function() {
-    return this.transitionTo('user.home');
+  beforeModel: function(transition) {
+    if (!window.localStorage.token) {
+      window.location = newSessionURL;
+    } else {
+      return this.transitionTo('user.home');
+    }
+  }
+});
+
+App.TokenRoute = Ember.Route.extend({
+  model: function(params) {
+    return App.Token.create({ token: params.token });
+  },
+  afterModel: function(model, transition) {
+    window.localStorage.token = model.get('token');
+    this.transitionTo('index');
   }
 });
 
 App.UserRoute = Ember.Route.extend({
   model: function() {
-    return Ember.$.getJSON('/user.json');
+    return ajax('GET', '/user.json', window.localStorage.token);
   }
 });
 
@@ -24,7 +56,7 @@ App.UserHomeRoute = Ember.Route.extend({
     return this.controllerFor('user').get('model');
   },
   setupController: function(controller, model) {
-    var tweetsPromise = Ember.$.getJSON('/timelines/home.json');
+    var tweetsPromise = ajax('GET', '/timelines/home.json', window.localStorage.token);
     tweetsPromise.then(function(tweets) {
       controller.set('tweets', tweets);
     });
@@ -33,10 +65,10 @@ App.UserHomeRoute = Ember.Route.extend({
 
 App.UserTimelineRoute = Ember.Route.extend({
   model: function(params) {
-    return Ember.$.getJSON('/user_info/' + params.screen_name + '.json');
+    return ajax('GET', '/user_info/' + params.screen_name + '.json', window.localStorage.token);
   },
   setupController: function(controller, model) {
-    var tweetsPromise = Ember.$.getJSON('/timelines/' + model.screen_name + '.json');
+    var tweetsPromise = ajax('GET', '/timelines/' + model.screen_name + '.json', window.localStorage.token);
     tweetsPromise.then(function(tweets) {
       controller.set('tweets', tweets);
     });
