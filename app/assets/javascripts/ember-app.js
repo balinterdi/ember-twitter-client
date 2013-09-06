@@ -67,9 +67,6 @@ App.UserRoute = App.AuthenticatedRoute.extend({
 });
 
 App.UserHomeRoute = App.AuthenticatedRoute.extend({
-  model: function() {
-    return this.controllerFor('user').get('model');
-  },
   setupController: function(controller, model) {
     var tweetsPromise = this.adapter.ajax('GET', '/twitter/timelines/home.json');
     tweetsPromise.then(function(tweets) {
