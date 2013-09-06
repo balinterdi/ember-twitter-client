@@ -26,6 +26,23 @@ App.Token = Ember.Object.extend({
   token: null
 });
 
+App.Tweet = Ember.Object.extend({
+  text: '',
+  profileImageUrl: '',
+  author: '', // screen_name of the original tweeter
+  urls: [],
+  media: [],
+  retweetedBy: null // name of the retweeter if it's a retweet
+});
+
+App.TwitterUser = Ember.Object.extend({
+});
+
+App.Tweets = Ember.ArrayProxy.extend(Ember.SortableMixin, {
+  sortProperties: ['created_at'],
+  sortAscending: false,
+});
+
 App.Router.map(function() {
   this.route('token', { path: '/token/:token' });
   this.resource('user', function() {
@@ -70,7 +87,26 @@ App.UserHomeRoute = App.AuthenticatedRoute.extend({
   setupController: function(controller, model) {
     var tweetsPromise = this.adapter.ajax('GET', '/twitter/timelines/home.json');
     tweetsPromise.then(function(tweets) {
-      controller.set('tweets', tweets);
+      var tweetObjects = tweets.map(function(tweet) {
+        // console.log(tweet.text.length);
+        var isRetweet = tweet.retweeted_status;
+        var originalTweet = isRetweet ? tweet.retweeted_status : tweet;
+        /*
+        if (tweet.retweeted_status) {
+          console.log("RT");
+          console.log(tweet.retweeted_status.text);
+        }
+        */
+        return App.Tweet.create({
+          text: originalTweet.text,
+          profileImageUrl: originalTweet.user.profile_image_url,
+          author: originalTweet.user.screen_name,
+          urls: originalTweet.entities.urls,
+          media: originalTweet.entities.media,
+          retweetedBy: isRetweet ? tweet.user.name : null
+        })
+      });
+      controller.set('tweets', tweetObjects);
     });
   }
 });
@@ -98,8 +134,14 @@ App.UserTimelineController = Ember.ObjectController.extend({
 
 App.TweetController = Ember.ObjectController.extend({
   biggerProfileImage: function() {
-    return this.get('user.profile_image_url').replace('normal', 'bigger');
-  }.property('user.profile_image_url')
+    return this.get('profileImageUrl').replace('normal', 'bigger');
+  }.property('profileImageUrl'),
+
+  retweetedLine: function() {
+    if (this.get('retweetedBy')) {
+      return "Retweeted by " + this.get('retweetedBy');
+    }
+  }.property('retweetedBy')
 });
 
 Ember.Handlebars.helper('html', function(tweet, options) {
@@ -112,16 +154,16 @@ Ember.Handlebars.helper('html', function(tweet, options) {
   // Essentially there is no way to extract urls from RTs from the data Twitter provides
   // so we might as well go simply matching urls in the text
   var text = tweet.get('text').replace(/\n/g, '<br />');
-  var urlEntities = tweet.get('entities.urls');
+  var urls = tweet.get('urls');
 
   var withUrls = text;
-  urlEntities.forEach(function(urlData) {
+  urls.forEach(function(urlData) {
     //FIXME: This breaks when there are multiple urls
     withUrls = replaceUrls(text, urlData);
   });
 
-  var mediaEntities = tweet.get('entities.media') || [];
-  mediaEntities.forEach(function(urlData) {
+  var media = tweet.get('media') || [];
+  media.forEach(function(urlData) {
     withUrls = replaceUrls(withUrls, urlData);
   });
 
