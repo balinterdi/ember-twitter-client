@@ -1,17 +1,26 @@
-window.App = Ember.Application.create();
+var myAPIAdapter = Ember.Object.extend({
+  apiRoot: 'http://localhost:3000',
 
-var apiRoot = 'http://localhost:3000';
-var newSessionURL = apiRoot + '/session/new';
-var ajax = function(type, path, token) {
-  return Ember.$.ajax(path, {
-    type: type,
-    headers: { 'X-OAuth-Token': token }
-  })
-}
+  initiateSession: function() {
+    var newSessionURL = this.get('apiRoot') + '/session/new';
+    window.location = newSessionURL;
+  },
 
-var apiGet = function(path) {
-  return Ember.$.getJSON(apiRoot + path);
-}
+  ajax: function(type, path, token) {
+    return Ember.$.ajax(path, {
+      type: type,
+      headers: { 'X-OAuth-Token': token }
+    })
+  }
+
+});
+
+window.App = Ember.Application.create({
+  ready: function() {
+    this.register('main:adapter', myAPIAdapter);
+    this.inject('route', 'adapter', 'main:adapter');
+  }
+});
 
 App.Token = Ember.Object.extend({
   token: null
@@ -28,7 +37,7 @@ App.Router.map(function() {
 App.IndexRoute = Ember.Route.extend({
   beforeModel: function(transition) {
     if (!window.localStorage.token) {
-      window.location = newSessionURL;
+      this.adapter.initiateSession();
     } else {
       return this.transitionTo('user.home');
     }
@@ -47,7 +56,7 @@ App.TokenRoute = Ember.Route.extend({
 
 App.UserRoute = Ember.Route.extend({
   model: function() {
-    return ajax('GET', '/user.json', window.localStorage.token);
+    return this.adapter.ajax('GET', '/user.json', window.localStorage.token);
   }
 });
 
@@ -56,7 +65,7 @@ App.UserHomeRoute = Ember.Route.extend({
     return this.controllerFor('user').get('model');
   },
   setupController: function(controller, model) {
-    var tweetsPromise = ajax('GET', '/timelines/home.json', window.localStorage.token);
+    var tweetsPromise = this.adapter.ajax('GET', '/timelines/home.json', window.localStorage.token);
     tweetsPromise.then(function(tweets) {
       controller.set('tweets', tweets);
     });
@@ -65,10 +74,10 @@ App.UserHomeRoute = Ember.Route.extend({
 
 App.UserTimelineRoute = Ember.Route.extend({
   model: function(params) {
-    return ajax('GET', '/user_info/' + params.screen_name + '.json', window.localStorage.token);
+    return this.adapter.ajax('GET', '/user_info/' + params.screen_name + '.json', window.localStorage.token);
   },
   setupController: function(controller, model) {
-    var tweetsPromise = ajax('GET', '/timelines/' + model.screen_name + '.json', window.localStorage.token);
+    var tweetsPromise = this.adapter.ajax('GET', '/timelines/' + model.screen_name + '.json', window.localStorage.token);
     tweetsPromise.then(function(tweets) {
       controller.set('tweets', tweets);
     });
