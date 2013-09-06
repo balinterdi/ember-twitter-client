@@ -84,11 +84,3 @@ Ember.Handlebars.helper('html', function(tweet, options) {
   return new Handlebars.SafeString(withUrls);
 });
 
-App.TimelineLinkView = Ember.View.extend({
-  tagName: 'span',
-  layout: Ember.Handlebars.compile('<a {{bindAttr href=view.link}}>{{yield}}</a>'),
-
-  link: function() {
-    return "#/user/timelines/" + this.get('name');
-  }.property('name')
-});

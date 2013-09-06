@@ -37,12 +37,12 @@
       </div>
 
       <div class="panel mini-profile">
-        {{#view App.TimelineLinkView nameBinding=screen_name}}
+        {{#link-to "user.timeline" this}}
           <img {{bind-attr src=profile_image_url}} />
           <div class="name">
             {{name}}
           </div>
-        {{/view}}
+        {{/link-to}}
         </a>
         <div class="row">
           <div class="large-4">
@@ -70,9 +70,6 @@
 </script>
 
 <script type="text/x-handlebars" data-template-name="user/home">
-  <div>
-    {{model}}
-  </div>
   {{partial "tweets"}}
 </script>
 
@@ -89,9 +86,9 @@
           </div>
           <div class="small-9 large-10 columns">
             <p>
-              {{#view App.TimelineLinkView nameBinding=user.screen_name}}
+              {{#link-to "user.timeline" user}}
                 <strong>{{user.screen_name}}</strong>
-              {{/view}}
+              {{/link-to}}
               {{html this}}
             </p>
           </div>
