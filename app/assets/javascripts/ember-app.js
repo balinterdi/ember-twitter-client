@@ -141,32 +141,31 @@ App.TweetController = Ember.ObjectController.extend({
     if (this.get('retweetedBy')) {
       return "Retweeted by " + this.get('retweetedBy');
     }
-  }.property('retweetedBy')
-});
+  }.property('retweetedBy'),
 
-Ember.Handlebars.helper('html', function(tweet, options) {
-  var replaceUrls = function(text, urlData) {
-    var start = urlData.indices[0];
-    var end   = urlData.indices[1];
-    return text.slice(0, start) + '<a href="' + urlData.expanded_url + '">' + urlData.display_url + '</a>' + text.slice(end);
-  }
+  parsedText: function() {
+    var makeUrl = function(text, urlData) {
+      var start = urlData.indices[0];
+      var end   = urlData.indices[1];
+      return '<a href="' + urlData.expanded_url + '">' + urlData.display_url + '</a>';
+    }
 
-  // Essentially there is no way to extract urls from RTs from the data Twitter provides
-  // so we might as well go simply matching urls in the text
-  var text = tweet.get('text').replace(/\n/g, '<br />');
-  var urls = tweet.get('urls');
+    var outText = '';
+    var text  = this.get('text');
 
-  var withUrls = text;
-  urls.forEach(function(urlData) {
-    //FIXME: This breaks when there are multiple urls
-    withUrls = replaceUrls(text, urlData);
-  });
+    var urls =  this.get('urls').concat(this.get('media') || []);
+    var pos = 0;
+    for (var i=0, url; i < urls.length; i++) {
+      url = urls[i];
+      outText += text.slice(pos, url.indices[0]);
+      outText += makeUrl(text, url);
+      pos = url.indices[1];
+    }
+    outText += text.slice(pos, text.length);
 
-  var media = tweet.get('media') || [];
-  media.forEach(function(urlData) {
-    withUrls = replaceUrls(withUrls, urlData);
-  });
+    outText = outText.replace(/\n/g, '<br />');
+    return new Handlebars.SafeString(outText);
 
-  return new Handlebars.SafeString(withUrls);
+  }.property('text', 'urls.@each', 'media.@each')
 });
 
