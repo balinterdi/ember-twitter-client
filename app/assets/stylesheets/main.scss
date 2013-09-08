@@ -34,8 +34,20 @@
 
 }
 
+#compose-box {
+  min-height: 160px;
+}
+
 .retweeted-by {
   font-size: 12px;
   color: #7a7a7a;
+}
+
+.tweet-button {
+  float: right;
+}
+
+.panel:after {
+  clear: both;
 }
 

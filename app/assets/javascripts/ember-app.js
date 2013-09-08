@@ -7,10 +7,16 @@ var APIAdapter = Ember.Object.extend({
     window.location = newSessionURL;
   },
 
-  ajax: function(type, path) {
+  createTweet: function(tweet) {
+    //TODO: Extract all the necessary attributes
+    this.ajax('POST', '/twitter/tweets.json', tweet.getProperties('text'));
+  },
+
+  ajax: function(type, path, payload) {
     return Ember.$.ajax(this.get('apiRoot') + path, {
       type: type,
-      headers: { 'X-OAuth-Token': this.get('token') }
+      headers: { 'X-OAuth-Token': this.get('token') },
+      data: (payload || {})
     })
   }
 });
@@ -32,10 +38,11 @@ App.Tweet = Ember.Object.extend({
   author: '', // screen_name of the original tweeter
   urls: [],
   media: [],
-  retweetedBy: null // name of the retweeter if it's a retweet
-});
+  retweetedBy: null, // name of the retweeter if it's a retweet
 
-App.TwitterUser = Ember.Object.extend({
+  save: function(adapter) {
+    return adapter.createTweet(this);
+  }
 });
 
 App.Tweets = Ember.ArrayProxy.extend(Ember.SortableMixin, {
@@ -78,6 +85,27 @@ App.TokenRoute = Ember.Route.extend({
 });
 
 App.UserRoute = App.AuthenticatedRoute.extend({
+  actions: {
+    sendTweet: function() {
+      var userController = this.controllerFor('user');
+      var homeController = this.controllerFor('user.home');
+
+      var user =  userController.get('model');
+      var tweet = userController.get('newTweet');
+      tweet.setProperties({
+        author: user.screen_name,
+        profileImageUrl: user.profile_image_url
+      });
+      homeController.get('tweets').unshiftObject(tweet);
+      tweet.save(this.adapter);
+      userController.clearTweet();
+    }
+  },
+
+  beforeModel: function() {
+    this.controllerFor('user').clearTweet();
+  },
+
   model: function() {
     return this.adapter.ajax('GET', '/user.json');
   }
@@ -88,15 +116,8 @@ App.UserHomeRoute = App.AuthenticatedRoute.extend({
     var tweetsPromise = this.adapter.ajax('GET', '/twitter/timelines/home.json');
     tweetsPromise.then(function(tweets) {
       var tweetObjects = tweets.map(function(tweet) {
-        // console.log(tweet.text.length);
         var isRetweet = tweet.retweeted_status;
         var originalTweet = isRetweet ? tweet.retweeted_status : tweet;
-        /*
-        if (tweet.retweeted_status) {
-          console.log("RT");
-          console.log(tweet.retweeted_status.text);
-        }
-        */
         return App.Tweet.create({
           text: originalTweet.text,
           profileImageUrl: originalTweet.user.profile_image_url,
@@ -123,7 +144,14 @@ App.UserTimelineRoute = App.AuthenticatedRoute.extend({
   }
 });
 
-App.UserController = Ember.ObjectController.extend();
+App.UserController = Ember.ObjectController.extend({
+  newTweet: null,
+  clearTweet: function() {
+    this.set('newTweet', App.Tweet.create({ text: '' }));
+  }
+
+});
+
 //TODO: We can probably remove that once user timelines work
 App.UserHomeController = Ember.ObjectController.extend({
   tweets: []
