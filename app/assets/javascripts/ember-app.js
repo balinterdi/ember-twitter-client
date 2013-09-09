@@ -33,16 +33,23 @@ App.Token = Ember.Object.extend({
 });
 
 App.Tweet = Ember.Object.extend({
+  profileImageUrl: Ember.computed.alias('user.profileImageUrl'),
+  screenName:      Ember.computed.alias('user.screenName'),
   text: '',
-  profileImageUrl: '',
-  author: '', // screen_name of the original tweeter
+  user: null,
   urls: [],
   media: [],
-  retweetedBy: null, // name of the retweeter if it's a retweet
+  retweetedBy: '', // name of the retweeter if it's a retweet
 
   save: function(adapter) {
     return adapter.createTweet(this);
   }
+});
+
+App.User = Ember.Object.extend({
+  name: '',
+  screenName: '',
+  profileImageUrl: ''
 });
 
 App.Tweets = Ember.ArrayProxy.extend(Ember.SortableMixin, {
@@ -54,7 +61,7 @@ App.Router.map(function() {
   this.route('token', { path: '/token/:token' });
   this.resource('user', function() {
     this.route('home');
-    this.route('timeline', { path: '/timelines/:screen_name' });
+    this.route('timeline', { path: '/timelines/:screenName' });
   })
 });
 
@@ -118,10 +125,15 @@ App.UserHomeRoute = App.AuthenticatedRoute.extend({
       var tweetObjects = tweets.map(function(tweet) {
         var isRetweet = tweet.retweeted_status;
         var originalTweet = isRetweet ? tweet.retweeted_status : tweet;
+        var user = App.User.create({
+          name: originalTweet.user.name,
+          screenName: originalTweet.user.screen_name,
+          profileImageUrl: originalTweet.user.profile_image_url
+        });
+
         return App.Tweet.create({
           text: originalTweet.text,
-          profileImageUrl: originalTweet.user.profile_image_url,
-          author: originalTweet.user.screen_name,
+          user: user,
           urls: originalTweet.entities.urls,
           media: originalTweet.entities.media,
           retweetedBy: isRetweet ? tweet.user.name : null
@@ -134,12 +146,41 @@ App.UserHomeRoute = App.AuthenticatedRoute.extend({
 
 App.UserTimelineRoute = App.AuthenticatedRoute.extend({
   model: function(params) {
-    return this.adapter.ajax('GET', '/twitter/users/' + params.screen_name + '.json');
+    var route = this;
+    return Ember.RSVP.Promise(function(resolve, reject) {
+      //TODO: Implement the reject branch, too
+      route.adapter.ajax('GET', '/twitter/users/' + params.screenName + '.json').then(function(user) {
+        var userObject = App.User.create({
+          name: user.name,
+          screenName: user.screen_name,
+          profileImageUrl: user.profile_image_url
+        })
+        resolve(userObject);
+      })
+    })
   },
   setupController: function(controller, model) {
-    var tweetsPromise = this.adapter.ajax('GET', '/twitter/timelines/' + model.screen_name + '.json');
+    var tweetsPromise = this.adapter.ajax('GET', '/twitter/timelines/' + model.get('screenName') + '.json');
+    //FIXME: Fix duplication between UserHomeRoute and here
     tweetsPromise.then(function(tweets) {
-      controller.set('tweets', tweets);
+      var tweetObjects = tweets.map(function(tweet) {
+        var isRetweet = tweet.retweeted_status;
+        var originalTweet = isRetweet ? tweet.retweeted_status : tweet;
+        var user = App.User.create({
+          name: originalTweet.user.name,
+          screenName: originalTweet.user.screen_name,
+          profileImageUrl: originalTweet.user.profile_image_url
+        });
+
+        return App.Tweet.create({
+          text: originalTweet.text,
+          user: user,
+          urls: originalTweet.entities.urls,
+          media: originalTweet.entities.media,
+          retweetedBy: isRetweet ? tweet.user.name : null
+        })
+      });
+      controller.set('tweets', tweetObjects);
     });
   }
 });
