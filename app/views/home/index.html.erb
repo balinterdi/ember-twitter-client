@@ -47,7 +47,7 @@
 
       <div class="panel mini-profile">
         {{#link-to "user.timeline" this}}
-          <img {{bind-attr src=profile_image_url}} />
+          <img {{bind-attr src=profileImageUrl}} />
           <div class="name">
             {{name}}
           </div>
@@ -56,19 +56,19 @@
         <div class="row">
           <div class="large-4">
             <span class="profile-num">
-              <strong>{{statuses_count}}</strong>
+              <strong>{{statusesCount}}</strong>
             <span>
             <span class="profile-quantity">Tweets</span>
           </div>
           <div class="large-4">
             <span class="profile-num">
-              <strong>{{friends_count}}</strong>
+              <strong>{{friendsCount}}</strong>
             </span>
             <span class="profile-quantity">Following</span>
           </div>
           <div class="large-3 last">
             <span class="profile-num">
-              <strong>{{followers_count}}</strong>
+              <strong>{{followersCount}}</strong>
             </span>
             <span class="profile-quantity">Followers</span>
           </div>

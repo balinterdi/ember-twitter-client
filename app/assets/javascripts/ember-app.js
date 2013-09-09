@@ -99,10 +99,7 @@ App.UserRoute = App.AuthenticatedRoute.extend({
 
       var user =  userController.get('model');
       var tweet = userController.get('newTweet');
-      tweet.setProperties({
-        author: user.screen_name,
-        profileImageUrl: user.profile_image_url
-      });
+      tweet.setProperties({ user: user });
       homeController.get('tweets').unshiftObject(tweet);
       tweet.save(this.adapter);
       userController.clearTweet();
@@ -114,7 +111,20 @@ App.UserRoute = App.AuthenticatedRoute.extend({
   },
 
   model: function() {
-    return this.adapter.ajax('GET', '/user.json');
+    var route = this;
+    return Ember.RSVP.Promise(function(resolve, reject) {
+      route.adapter.ajax('GET', '/user.json').then(function(user) {
+        var userObject = App.User.create({
+          name: user.name,
+          screenName: user.screen_name,
+          profileImageUrl: user.profile_image_url,
+          statusesCount: user.statuses_count,
+          friendsCount: user.friends_count,
+          followersCount: user.followers_count
+        })
+        resolve(userObject);
+      });
+    })
   }
 });
 
