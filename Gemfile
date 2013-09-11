@@ -21,12 +21,7 @@ gem 'uglifier', '>= 1.3.0'
 # Use jquery as the JavaScript library
 # gem 'jquery-rails'
 
-gem 'omniauth-twitter'
-gem 'twitter'
-gem 'faraday'
-gem 'faraday_middleware'
 gem 'zurb-foundation', '~> 4.0.0'
-gem 'debugger', group: 'development'
 
 group :doc do
   # bundle exec rake doc:rails generates the API under doc/api.
