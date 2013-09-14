@@ -39,18 +39,50 @@ App.Tweet = Ember.Object.extend({
   user: null,
   urls: [],
   media: [],
-  retweetedBy: '', // name of the retweeter if it's a retweet
+  retweetedStatus: false,
 
   save: function(adapter) {
     return adapter.createTweet(this);
+  },
+  retweetedBy: function() {
+    return this.get('retweetedStatus') ? this.get('user.name') : null;
+  }.property('retweetedStatus', 'user.name')
+});
+
+App.Tweet.reopenClass({
+  createFromResponse: function(tweet, user) {
+    return App.Tweet.create({
+      text: tweet.text,
+      user: user,
+      urls: tweet.entities.urls,
+      media: tweet.entities.media,
+      retweetedStatus: tweet.retweeted_status
+    })
   }
 });
 
 App.User = Ember.Object.extend({
   name: '',
   screenName: '',
-  profileImageUrl: ''
+  profileImageUrl: '',
+  statusesCount: '',
+  friendsCount: '',
+  followersCount: ''
 });
+
+App.User.reopenClass({
+  createFromResponse: function(user) {
+    return App.User.create({
+      name: user.name,
+      screenName: user.screen_name,
+      profileImageUrl: user.profile_image_url,
+      statusesCount: user.statuses_count,
+      friendsCount: user.friends_count,
+      followersCount: user.followers_count
+    })
+  }
+});
+
 
 App.Tweets = Ember.ArrayProxy.extend(Ember.SortableMixin, {
   sortProperties: ['created_at'],
@@ -113,14 +145,7 @@ App.UserRoute = App.AuthenticatedRoute.extend({
     var route = this;
     return Ember.RSVP.Promise(function(resolve, reject) {
       route.adapter.ajax('GET', '/user.json').then(function(user) {
-        var userObject = App.User.create({
-          name: user.name,
-          screenName: user.screen_name,
-          profileImageUrl: user.profile_image_url,
-          statusesCount: user.statuses_count,
-          friendsCount: user.friends_count,
-          followersCount: user.followers_count
-        })
+        var userObject = App.User.createFromResponse(user);
         resolve(userObject);
       });
     })
@@ -134,19 +159,8 @@ App.UserIndexRoute = App.AuthenticatedRoute.extend({
       var tweetObjects = tweets.map(function(tweet) {
         var isRetweet = tweet.retweeted_status;
         var originalTweet = isRetweet ? tweet.retweeted_status : tweet;
-        var user = App.User.create({
-          name: originalTweet.user.name,
-          screenName: originalTweet.user.screen_name,
-          profileImageUrl: originalTweet.user.profile_image_url
-        });
-
-        return App.Tweet.create({
-          text: originalTweet.text,
-          user: user,
-          urls: originalTweet.entities.urls,
-          media: originalTweet.entities.media,
-          retweetedBy: isRetweet ? tweet.user.name : null
-        })
+        var user = App.User.createFromResponse(originalTweet.user);
+        return App.Tweet.createFromResponse(originalTweet, user);
       });
       controller.set('tweets', tweetObjects);
     });
@@ -159,11 +173,7 @@ App.UserTimelineRoute = App.AuthenticatedRoute.extend({
     return Ember.RSVP.Promise(function(resolve, reject) {
       //TODO: Implement the reject branch, too
       route.adapter.ajax('GET', '/twitter/users/' + params.screenName + '.json').then(function(user) {
-        var userObject = App.User.create({
-          name: user.name,
-          screenName: user.screen_name,
-          profileImageUrl: user.profile_image_url
-        })
+        var userObject = App.User.createFromResponse(user);
         resolve(userObject);
       })
     })
@@ -175,19 +185,8 @@ App.UserTimelineRoute = App.AuthenticatedRoute.extend({
       var tweetObjects = tweets.map(function(tweet) {
         var isRetweet = tweet.retweeted_status;
         var originalTweet = isRetweet ? tweet.retweeted_status : tweet;
-        var user = App.User.create({
-          name: originalTweet.user.name,
-          screenName: originalTweet.user.screen_name,
-          profileImageUrl: originalTweet.user.profile_image_url
-        });
-
-        return App.Tweet.create({
-          text: originalTweet.text,
-          user: user,
-          urls: originalTweet.entities.urls,
-          media: originalTweet.entities.media,
-          retweetedBy: isRetweet ? tweet.user.name : null
-        })
+        var user = App.User.createFromResponse(originalTweet.user);
+        return App.Tweet.createFromResponse(originalTweet, user);
       });
       controller.set('tweets', tweetObjects);
     });
