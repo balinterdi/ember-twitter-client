@@ -155,15 +155,7 @@ App.UserRoute = App.AuthenticatedRoute.extend({
 App.UserIndexRoute = App.AuthenticatedRoute.extend({
   setupController: function(controller, model) {
     var tweetsPromise = this.adapter.ajax('GET', '/twitter/timelines/home.json');
-    tweetsPromise.then(function(tweets) {
-      var tweetObjects = tweets.map(function(tweet) {
-        var isRetweet = tweet.retweeted_status;
-        var originalTweet = isRetweet ? tweet.retweeted_status : tweet;
-        var user = App.User.createFromResponse(originalTweet.user);
-        return App.Tweet.createFromResponse(originalTweet, user);
-      });
-      controller.set('tweets', tweetObjects);
-    });
+    controller.setTweets(tweetsPromise);
   }
 });
 
@@ -180,16 +172,7 @@ App.UserTimelineRoute = App.AuthenticatedRoute.extend({
   },
   setupController: function(controller, model) {
     var tweetsPromise = this.adapter.ajax('GET', '/twitter/timelines/' + model.get('screenName') + '.json');
-    //FIXME: Fix duplication between UserHomeRoute and here
-    tweetsPromise.then(function(tweets) {
-      var tweetObjects = tweets.map(function(tweet) {
-        var isRetweet = tweet.retweeted_status;
-        var originalTweet = isRetweet ? tweet.retweeted_status : tweet;
-        var user = App.User.createFromResponse(originalTweet.user);
-        return App.Tweet.createFromResponse(originalTweet, user);
-      });
-      controller.set('tweets', tweetObjects);
-    });
+    controller.setTweets(tweetsPromise);
   }
 });
 
@@ -201,11 +184,25 @@ App.UserController = Ember.ObjectController.extend({
 
 });
 
-//TODO: We can probably remove that once user timelines work
-App.UserIndexController = Ember.ObjectController.extend({
+App.TimelineController = Ember.Mixin.create({
+  setTweets: function(promise) {
+    var controller = this;
+    promise.then(function(tweets) {
+      var tweetObjects = tweets.map(function(tweet) {
+        var isRetweet = tweet.retweeted_status;
+        var originalTweet = isRetweet ? tweet.retweeted_status : tweet;
+        var user = App.User.createFromResponse(originalTweet.user);
+        return App.Tweet.createFromResponse(originalTweet, user);
+      });
+      controller.set('tweets', tweetObjects);
+    });
+  }
+});
+
+App.UserIndexController = Ember.ObjectController.extend(App.TimelineController, {
   tweets: []
 });
-App.UserTimelineController = Ember.ObjectController.extend({
+App.UserTimelineController = Ember.ObjectController.extend(App.TimelineController, {
   tweets: []
 });
 
