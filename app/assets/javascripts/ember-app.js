@@ -60,7 +60,6 @@ App.Tweets = Ember.ArrayProxy.extend(Ember.SortableMixin, {
 App.Router.map(function() {
   this.route('token', { path: '/token/:token' });
   this.resource('user', function() {
-    this.route('home');
     this.route('timeline', { path: '/timelines/:screenName' });
   })
 });
@@ -75,7 +74,7 @@ App.AuthenticatedRoute = Ember.Route.extend({
 
 App.IndexRoute = Ember.Route.extend({
   beforeModel: function(transition) {
-    return this.transitionTo('user.home');
+    return this.transitionTo('user.index');
   }
 });
 
@@ -95,12 +94,12 @@ App.UserRoute = App.AuthenticatedRoute.extend({
   actions: {
     sendTweet: function() {
       var userController = this.controllerFor('user');
-      var homeController = this.controllerFor('user.home');
+      var userIndexController = this.controllerFor('user.index');
 
       var user =  userController.get('model');
       var tweet = userController.get('newTweet');
       tweet.setProperties({ user: user });
-      homeController.get('tweets').unshiftObject(tweet);
+      userIndexController.get('tweets').unshiftObject(tweet);
       tweet.save(this.adapter);
       userController.clearTweet();
     }
@@ -128,7 +127,7 @@ App.UserRoute = App.AuthenticatedRoute.extend({
   }
 });
 
-App.UserHomeRoute = App.AuthenticatedRoute.extend({
+App.UserIndexRoute = App.AuthenticatedRoute.extend({
   setupController: function(controller, model) {
     var tweetsPromise = this.adapter.ajax('GET', '/twitter/timelines/home.json');
     tweetsPromise.then(function(tweets) {
@@ -204,7 +203,7 @@ App.UserController = Ember.ObjectController.extend({
 });
 
 //TODO: We can probably remove that once user timelines work
-App.UserHomeController = Ember.ObjectController.extend({
+App.UserIndexController = Ember.ObjectController.extend({
   tweets: []
 });
 App.UserTimelineController = Ember.ObjectController.extend({
