@@ -33,30 +33,36 @@ App.Token = Ember.Object.extend({
 });
 
 App.Tweet = Ember.Object.extend({
-  profileImageUrl: Ember.computed.alias('user.profileImageUrl'),
-  screenName:      Ember.computed.alias('user.screenName'),
   text: '',
   user: null,
   urls: [],
   media: [],
-  retweetedStatus: false,
+  originalTweet: null,
+  screenName: Ember.computed.alias('user.screenName'),
+  profileImageUrl: Ember.computed.alias('user.profileImageUrl'),
+  author: Ember.computed.any('originalTweet.user', 'user'),
+  authorName: Ember.computed.alias('author.name'),
+  authorProfileImageUrl: Ember.computed.alias('author.profileImageUrl'),
+  retweetedBy: function() {
+    if (this.get('originalTweet')) {
+      return this.get('user.name');
+    }
+  }.property('originalTweet', 'user.name'),
 
   save: function(adapter) {
     return adapter.createTweet(this);
   },
-  retweetedBy: function() {
-    return this.get('retweetedStatus') ? this.get('user.name') : null;
-  }.property('retweetedStatus', 'user.name')
+
 });
 
 App.Tweet.reopenClass({
-  createFromResponse: function(tweet, user) {
+  createFromResponse: function(tweet, user, originalTweet) {
     return App.Tweet.create({
       text: tweet.text,
       user: user,
       urls: tweet.entities.urls,
       media: tweet.entities.media,
-      retweetedStatus: tweet.retweeted_status
+      originalTweet: originalTweet
     })
   }
 });
@@ -189,10 +195,14 @@ App.TimelineController = Ember.Mixin.create({
     var controller = this;
     promise.then(function(tweets) {
       var tweetObjects = tweets.map(function(tweet) {
-        var isRetweet = tweet.retweeted_status;
-        var originalTweet = isRetweet ? tweet.retweeted_status : tweet;
-        var user = App.User.createFromResponse(originalTweet.user);
-        return App.Tweet.createFromResponse(originalTweet, user);
+        var originalTweet, originalUser,
+            isRetweet = tweet.retweeted_status;
+        if (isRetweet) {
+          originalUser  = App.User.createFromResponse(tweet.retweeted_status.user);
+          originalTweet = App.Tweet.createFromResponse(tweet.retweeted_status, originalUser);
+        }
+        var user = App.User.createFromResponse(tweet.user);
+        return App.Tweet.createFromResponse(tweet, user, originalTweet);
       });
       controller.set('tweets', tweetObjects);
     });
@@ -208,8 +218,8 @@ App.UserTimelineController = Ember.ObjectController.extend(App.TimelineControlle
 
 App.TweetController = Ember.ObjectController.extend({
   biggerProfileImage: function() {
-    return this.get('profileImageUrl').replace('normal', 'bigger');
-  }.property('profileImageUrl'),
+    return this.get('authorProfileImageUrl').replace('normal', 'bigger');
+  }.property('authorProfileImageUrl'),
 
   retweetedLine: function() {
     if (this.get('retweetedBy')) {
