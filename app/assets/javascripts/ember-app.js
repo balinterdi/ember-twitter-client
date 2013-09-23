@@ -143,10 +143,6 @@ App.UserRoute = App.AuthenticatedRoute.extend({
     }
   },
 
-  beforeModel: function() {
-    this.controllerFor('user').clearTweet();
-  },
-
   model: function() {
     var route = this;
     return Ember.RSVP.Promise(function(resolve, reject) {
