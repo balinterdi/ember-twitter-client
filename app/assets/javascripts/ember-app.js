@@ -8,7 +8,6 @@ var APIAdapter = Ember.Object.extend({
   },
 
   createTweet: function(tweet) {
-    //TODO: Extract all the necessary attributes
     this.ajax('POST', '/twitter/tweets.json', tweet.getProperties('text'));
   },
 
@@ -90,11 +89,6 @@ App.User.reopenClass({
 });
 
 
-App.Tweets = Ember.ArrayProxy.extend(Ember.SortableMixin, {
-  sortProperties: ['created_at'],
-  sortAscending: false,
-});
-
 App.Router.map(function() {
   this.route('token', { path: '/token/:token' });
   this.resource('user', function() {
@@ -165,7 +159,6 @@ App.UserTimelineRoute = App.AuthenticatedRoute.extend({
   model: function(params) {
     var route = this;
     return Ember.RSVP.Promise(function(resolve, reject) {
-      //TODO: Implement the reject branch, too
       route.adapter.ajax('GET', '/twitter/users/' + params.screenName + '.json').then(function(user) {
         var userObject = App.User.createFromResponse(user);
         resolve(userObject);
