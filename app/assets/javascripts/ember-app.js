@@ -125,15 +125,14 @@ App.TokenRoute = Ember.Route.extend({
 App.UserRoute = App.AuthenticatedRoute.extend({
   actions: {
     sendTweet: function() {
-      var userController = this.controllerFor('user');
-      var userIndexController = this.controllerFor('user.index');
-
-      var user =  userController.get('model');
-      var tweet = userController.get('newTweet');
+      var user =  this.controller.get('model');
+      var tweet = this.controller.get('newTweet');
       tweet.setProperties({ user: user });
+
+      var userIndexController = this.controllerFor('user.index');
       userIndexController.get('tweets').unshiftObject(tweet);
       tweet.save(this.adapter);
-      userController.clearTweet();
+      this.controller.clearTweet();
     }
   },
 
