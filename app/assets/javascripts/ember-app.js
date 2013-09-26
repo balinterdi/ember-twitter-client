@@ -42,6 +42,11 @@ App.Tweet = Ember.Object.extend({
   author: Ember.computed.any('originalTweet.user', 'user'),
   authorName: Ember.computed.alias('author.name'),
   authorProfileImageUrl: Ember.computed.alias('author.profileImageUrl'),
+
+  isRetweet: function() {
+    return !Ember.isNone(this.get('originalTweet'));
+  }.property('originalTweet'),
+
   retweetedBy: function() {
     if (this.get('originalTweet')) {
       return this.get('user.name');
@@ -179,6 +184,15 @@ App.UserController = Ember.ObjectController.extend({
 });
 
 App.TimelineController = Ember.Mixin.create({
+  showRetweets: true,
+  filteredTweets: function() {
+    var tweets = this.get('tweets');
+    if (!this.get('showRetweets')) {
+      tweets = tweets.filterProperty('isRetweet', false);
+    }
+    return tweets;
+  }.property('showRetweets', 'tweets.@each'),
+
   setTweets: function(promise) {
     var controller = this;
     promise.then(function(tweets) {

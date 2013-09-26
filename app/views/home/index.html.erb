@@ -88,7 +88,13 @@
 
 <script type="text/x-handlebars" data-template-name="_tweets">
     <div class="small-12 medium-8 large-8 columns medium-push-4 large-push-4">
-      {{#each tweets itemController="tweet"}}
+      <div class="row">
+        <div id="retweet-panel" class="large-4">
+          {{input id="retweet-filter" type="checkbox" name="retweetFilter" checked=showRetweets }}
+          <label  id="retweet-label" for="retweet-filter">Show RTs</label>
+        </div>
+      </div>
+      {{#each filteredTweets itemController="tweet"}}
         <div class="row">
           <div class="small-3 large-2 columns ">
             <img {{bind-attr src="biggerProfileImage"}} />

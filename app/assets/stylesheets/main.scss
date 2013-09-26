@@ -51,3 +51,15 @@
   clear: both;
 }
 
+#retweet-panel {
+  margin-left: 10px;
+  margin-bottom: 25px;
+  label {
+    margin-left: 10px;
+  }
+  * {
+    font-size: 1em;
+    float: left;
+  }
+}
+
